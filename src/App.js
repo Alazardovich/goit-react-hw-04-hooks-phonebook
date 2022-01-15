@@ -1,5 +1,6 @@
+/* eslint-disable no-undef */
 import "./App.css";
-import React, { Component } from "react";
+import { useState, useEffect } from "react";
 import { nanoid } from "nanoid";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -9,41 +10,26 @@ import ContactList from "../src/components/ContactList/ContactList.jsx";
 
 // import ReactDOM from 'react-dom';
 
-export class App extends Component {
-  state = {
-    contacts: [
-      { id: nanoid(), name: "Rosie Simpson", number: "459-12-56" },
-      { id: nanoid(), name: "Hermione Kline", number: "443-89-12" },
-      { id: nanoid(), name: "Eden Clements", number: "645-17-79" },
-      { id: nanoid(), name: "Annie Copeland", number: "227-91-26" },
-    ],
-    filter: "",
-  };
-  componentDidMount() {
-    const contacts = localStorage.getItem("contacts");
-    const parsedContacts = JSON.parse(contacts);
-    if (parsedContacts) {
-      this.setState({ contacts: parsedContacts });
-    }
-    // console.log("didMount", this.state.contacts);
-  }
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.contacts !== this.state.contacts) {
-      // console.log("didUpdate: change contacts");
-      localStorage.setItem("contacts", JSON.stringify(this.state.contacts));
-    }
-  }
+const App = () => {
+  const [contacts, onContacts] = useState(() => {
+    return JSON.parse(window.localStorage.getItem("contacts") ?? []);
+  });
+  // const [contacts, onContacts] = useState([]);
+  const [filter, onFilter] = useState("");
 
-  findContact = (name) => {
-    const { contacts } = this.state;
+  useEffect(() => {
+    console.log("useEffect");
+    window.localStorage.setItem("contacts", JSON.stringify(contacts));
+  }, [contacts]);
+
+  const findContact = (name) => {
     const normalizedName = name.toLowerCase();
-    return contacts.some(
-      (contact) => contact.name.toLowerCase() === normalizedName
-    );
+    return contacts.some((contact) => {
+      return contact.name.toLowerCase() === normalizedName;
+    });
   };
-  addNewContact = ({ name, number }) => {
-    const checkName = this.findContact(name);
-
+  const addNewContact = (name, number) => {
+    const checkName = findContact(name);
     if (checkName) {
       return toast.error(`${name}is already in contacts`);
     }
@@ -52,52 +38,129 @@ export class App extends Component {
       name: name,
       number: number,
     };
-    this.setState((prevState) => {
-      return {
-        contacts: [contact, ...prevState.contacts],
-      };
-    });
+    onContacts((state) => [contact, ...state]);
   };
-  deleteContact = (contactId) => {
-    this.setState((prevState) => {
-      return {
-        contacts: prevState.contacts.filter(
-          (contact) => contact.id !== contactId
-        ),
-      };
-    });
-  };
-  changeFilter = (event) => {
-    this.setState({
-      filter: event.target.value,
-    });
+  const deleteContact = (contactId) => {
+    onContacts(contacts.filter(({ id }) => id !== contactId));
   };
 
-  handleFilter = () => {
-    const { filter, contacts } = this.state;
+  const changeFilter = (event) => {
+    onFilter(event.currentTarget.value);
+  };
+
+  const handleFilter = () => {
+    // const { filter, contacts } = this.state;
     const normalizedFilter = filter.toLowerCase();
     return contacts.filter((contact) =>
       contact.name.toLowerCase().includes(normalizedFilter)
     );
   };
+  const visibleContact = handleFilter();
+  return (
+    <div>
+      <Toaster />
+      <h1>Phonebook</h1>
+      <ContactForm addNewContact={addNewContact} />
 
-  render() {
-    const visibleContact = this.handleFilter();
-    return (
-      <div>
-        <Toaster />
-        <h1>Phonebook</h1>
-        <ContactForm onSubmit={this.addNewContact} />
-
-        <h2>Contacts</h2>
-        <Filter filter={this.state.filter} onChange={this.changeFilter} />
-        <ContactList
-          onHandleFilter={visibleContact}
-          onDeleteContact={this.deleteContact}
-        />
-      </div>
-    );
-  }
-}
-
+      <h2>Contacts</h2>
+      <Filter filter={filter} onChange={changeFilter} />
+      <ContactList
+        onHandleFilter={visibleContact}
+        onDeleteContact={deleteContact}
+      />
+    </div>
+  );
+};
 export default App;
+// export class App extends Component {
+//   state = {
+//     contacts: [
+//       { id: nanoid(), name: "Rosie Simpson", number: "459-12-56" },
+//       { id: nanoid(), name: "Hermione Kline", number: "443-89-12" },
+//       { id: nanoid(), name: "Eden Clements", number: "645-17-79" },
+//       { id: nanoid(), name: "Annie Copeland", number: "227-91-26" },
+//     ],
+//     filter: "",
+//   };
+//   componentDidMount() {
+//     const contacts = localStorage.getItem("contacts");
+//     const parsedContacts = JSON.parse(contacts);
+//     if (parsedContacts) {
+//       this.setState({ contacts: parsedContacts });
+//     }
+//     // console.log("didMount", this.state.contacts);
+//   }
+//   componentDidUpdate(prevProps, prevState) {
+//     if (prevState.contacts !== this.state.contacts) {
+//       // console.log("didUpdate: change contacts");
+//       localStorage.setItem("contacts", JSON.stringify(this.state.contacts));
+//     }
+//   }
+
+//   findContact = (name) => {
+//     const { contacts } = this.state;
+//     const normalizedName = name.toLowerCase();
+//     return contacts.some(
+//       (contact) => contact.name.toLowerCase() === normalizedName
+//     );
+//   };
+//   addNewContact = ({ name, number }) => {
+//     const checkName = this.findContact(name);
+
+//     if (checkName) {
+//       return toast.error(`${name}is already in contacts`);
+//     }
+//     const contact = {
+//       id: nanoid(),
+//       name: name,
+//       number: number,
+//     };
+//     this.setState((prevState) => {
+//       return {
+//         contacts: [contact, ...prevState.contacts],
+//       };
+//     });
+//   };
+//   deleteContact = (contactId) => {
+//     this.setState((prevState) => {
+//       return {
+//         contacts: prevState.contacts.filter(
+//           (contact) => contact.id !== contactId
+//         ),
+//       };
+//     });
+//   };
+//   changeFilter = (event) => {
+//     this.setState({
+//       filter: event.target.value,
+//     });
+//   };
+
+//   handleFilter = () => {
+//     const { filter, contacts } = this.state;
+//     const normalizedFilter = filter.toLowerCase();
+//     return contacts.filter((contact) =>
+//       contact.name.toLowerCase().includes(normalizedFilter)
+//     );
+//   };
+
+//   render() {
+//     const visibleContact = this.handleFilter();
+//     return (
+//       <div>
+//         <Toaster />
+//         <h1>Phonebook</h1>
+//         <ContactForm addNewContact={this.addNewContact} />
+
+//         <h2>Contacts</h2>
+//         <Filter filter={this.state.filter} onChange={this.changeFilter} />
+//         <ContactList
+//           onHandleFilter={visibleContact}
+//           onDeleteContact={this.deleteContact}
+//         />
+//       </div>
+//     );
+//   }
+// }
+
+// export default App;
